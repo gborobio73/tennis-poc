@@ -10,6 +10,7 @@
 #include "util/color.h"
 #include "util/compat.h"
 #include "util/graphics.h"
+#include "util/inverter_layer.h"
 #include "util/memory.h"
 #include "util/string.h"
 #include "util/window.h"
@@ -40,6 +41,7 @@ struct __attribute__((__packed__)) ElementCommonPacket {
   Packet packet;
   uint32_t id;
   GRect frame;
+  uint16_t border_width;
   GColor8 background_color;
   GColor8 border_color;
 };
@@ -51,6 +53,16 @@ struct __attribute__((__packed__)) ElementRadiusPacket {
   uint32_t id;
   uint16_t radius;
 };
+
+typedef struct ElementAnglePacket ElementAnglePacket;
+
+struct __attribute__((__packed__)) ElementAnglePacket {
+  Packet packet;
+  uint32_t id;
+  uint16_t angle;
+};
+
+typedef struct ElementAnglePacket ElementAngle2Packet;
 
 typedef struct ElementTextPacket ElementTextPacket;
 
@@ -151,6 +163,7 @@ static void destroy_element(SimplyStage *self, SimplyElementCommon *element) {
 
 static void destroy_animation(SimplyStage *self, SimplyAnimation *animation) {
   if (!animation) { return; }
+  property_animation_destroy(animation->animation);
   list1_remove(&self->stage_layer.animations, &animation->node);
   free(animation);
 }
@@ -169,17 +182,23 @@ void simply_stage_clear(SimplyStage *self) {
   simply_stage_update_ticker(self);
 }
 
-static void rect_element_draw_background(GContext *ctx, SimplyStage *self, SimplyElementRect *element) {
-  if (element->background_color.a) {
-    graphics_context_set_fill_color(ctx, GColor8Get(element->background_color));
-    graphics_fill_rect(ctx, element->frame, element->radius, GCornersAll);
+static void element_set_graphics_context(GContext *ctx, SimplyStage *self,
+                                         SimplyElementCommon *element) {
+  graphics_context_set_fill_color(ctx, element->background_color);
+  graphics_context_set_stroke_color(ctx, element->border_color);
+  graphics_context_set_stroke_width(ctx, element->border_width);
+}
+
+static void rect_element_draw_background(GContext *ctx, SimplyStage *self,
+                                         SimplyElementRect *element) {
+  if (element->common.background_color.a) {
+    graphics_fill_rect(ctx, element->common.frame, element->radius, GCornersAll);
   }
 }
 
 static void rect_element_draw_border(GContext *ctx, SimplyStage *self, SimplyElementRect *element) {
-  if (element->border_color.a) {
-    graphics_context_set_stroke_color(ctx, GColor8Get(element->border_color));
-    graphics_draw_round_rect(ctx, element->frame, element->radius);
+  if (element->common.border_color.a) {
+    graphics_draw_round_rect(ctx, element->common.frame, element->radius);
   }
 }
 
@@ -188,14 +207,48 @@ static void rect_element_draw(GContext *ctx, SimplyStage *self, SimplyElementRec
   rect_element_draw_border(ctx, self, element);
 }
 
-static void circle_element_draw(GContext *ctx, SimplyStage *self, SimplyElementCircle *element) {
-  if (element->background_color.a) {
-    graphics_context_set_fill_color(ctx, GColor8Get(element->background_color));
-    graphics_fill_circle(ctx, element->frame.origin, element->radius);
-  }
+static void line_element_draw(GContext *ctx, SimplyStage *self, SimplyElementLine *element) {
   if (element->border_color.a) {
-    graphics_context_set_stroke_color(ctx, GColor8Get(element->border_color));
-    graphics_draw_circle(ctx, element->frame.origin, element->radius);
+    const GPoint end = { element->frame.origin.x + element->frame.size.w,
+                         element->frame.origin.y + element->frame.size.h };
+    graphics_draw_line(ctx, element->frame.origin, end);
+  }
+}
+
+static void circle_element_draw(GContext *ctx, SimplyStage *self, SimplyElementCircle *element) {
+  if (element->common.background_color.a) {
+    graphics_fill_circle(ctx, element->common.frame.origin, element->radius);
+  }
+  if (element->common.border_color.a) {
+    graphics_draw_circle(ctx, element->common.frame.origin, element->radius);
+  }
+}
+
+static void prv_draw_line_polar(GContext *ctx, const GRect *outer_frame, const GRect *inner_frame,
+                                GOvalScaleMode scale_mode, int32_t angle) {
+  const GPoint a = gpoint_from_polar(*outer_frame, scale_mode, angle);
+  const GPoint b = gpoint_from_polar(*inner_frame, scale_mode, angle);
+  graphics_draw_line(ctx, a, b);
+}
+
+static void radial_element_draw(GContext *ctx, SimplyStage *self, SimplyElementRadial *element) {
+  const GOvalScaleMode scale_mode = GOvalScaleModeFitCircle;
+  const int32_t angle = DEG_TO_TRIGANGLE(element->angle);
+  const int32_t angle2 = DEG_TO_TRIGANGLE(element->angle2);
+  const GRect *frame = &element->rect.common.frame;
+  if (element->rect.common.background_color.a) {
+    graphics_fill_radial(ctx, *frame, scale_mode, element->rect.radius, angle, angle2);
+  }
+  if (element->rect.common.border_color.a && element->rect.common.border_width) {
+    graphics_draw_arc(ctx, *frame, scale_mode, angle, angle2);
+    if (element->rect.radius) {
+      GRect inner_frame = grect_inset(*frame, GEdgeInsets(element->rect.radius));
+      if (inner_frame.size.w) {
+        prv_draw_line_polar(ctx, frame, &inner_frame, scale_mode, angle);
+        prv_draw_line_polar(ctx, frame, &inner_frame, scale_mode, angle2);
+        graphics_draw_arc(ctx, inner_frame, GOvalScaleModeFitCircle, angle, angle2);
+      }
+    }
   }
 }
 
@@ -208,30 +261,31 @@ static char *format_time(char *format) {
 }
 
 static void text_element_draw(GContext *ctx, SimplyStage *self, SimplyElementText *element) {
-  rect_element_draw(ctx, self, (SimplyElementRect*) element);
+  rect_element_draw(ctx, self, &element->rect);
   char *text = element->text;
   if (element->text_color.a && is_string(text)) {
     if (element->time_units) {
       text = format_time(text);
     }
     GFont font = element->font ? element->font : fonts_get_system_font(FONT_KEY_GOTHIC_14);
-    graphics_context_set_text_color(ctx, GColor8Get(element->text_color));
-    graphics_draw_text(ctx, text, font, element->frame, element->overflow_mode, element->alignment, NULL);
+    graphics_context_set_text_color(ctx, gcolor8_get(element->text_color));
+    graphics_draw_text(ctx, text, font, element->rect.common.frame, element->overflow_mode,
+                       element->alignment, NULL);
   }
 }
 
 static void image_element_draw(GContext *ctx, SimplyStage *self, SimplyElementImage *element) {
   graphics_context_set_compositing_mode(ctx, element->compositing);
-  rect_element_draw_background(ctx, self, (SimplyElementRect*) element);
-  GBitmap *bitmap = simply_res_get_image(self->window.simply->res, element->image);
-  if (bitmap) {
-    GRect frame = element->frame;
+  rect_element_draw_background(ctx, self, &element->rect);
+  SimplyImage *image = simply_res_get_image(self->window.simply->res, element->image);
+  if (image && image->bitmap) {
+    GRect frame = element->rect.common.frame;
     if (frame.size.w == 0 && frame.size.h == 0) {
-      frame = gbitmap_get_bounds(bitmap);
+      frame = gbitmap_get_bounds(image->bitmap);
     }
-    graphics_draw_bitmap_centered(ctx, bitmap, frame);
+    graphics_draw_bitmap_centered(ctx, image->bitmap, frame);
   }
-  rect_element_draw_border(ctx, self, (SimplyElementRect*) element);
+  rect_element_draw_border(ctx, self, &element->rect);
   graphics_context_set_compositing_mode(ctx, GCompOpAssign);
 }
 
@@ -243,11 +297,14 @@ static void layer_update_callback(Layer *layer, GContext *ctx) {
   frame.origin.x = -frame.origin.x;
   frame.origin.y = -frame.origin.y;
 
-  graphics_context_set_fill_color(ctx, GColor8Get(self->window.background_color));
+  graphics_context_set_antialiased(ctx, true);
+
+  graphics_context_set_fill_color(ctx, gcolor8_get(self->window.background_color));
   graphics_fill_rect(ctx, frame, 0, GCornerNone);
 
-  SimplyElementCommon *element = (SimplyElementCommon*) self->stage_layer.elements;
+  SimplyElementCommon *element = (SimplyElementCommon *)self->stage_layer.elements;
   while (element) {
+    element_set_graphics_context(ctx, self, element);
     int16_t max_y = element->frame.origin.y + element->frame.size.h;
     if (max_y > frame.size.h) {
       frame.size.h = max_y;
@@ -256,16 +313,22 @@ static void layer_update_callback(Layer *layer, GContext *ctx) {
       case SimplyElementTypeNone:
         break;
       case SimplyElementTypeRect:
-        rect_element_draw(ctx, self, (SimplyElementRect*) element);
+        rect_element_draw(ctx, self, (SimplyElementRect *)element);
+        break;
+      case SimplyElementTypeLine:
+        line_element_draw(ctx, self, (SimplyElementLine *)element);
         break;
       case SimplyElementTypeCircle:
-        circle_element_draw(ctx, self, (SimplyElementCircle*) element);
+        circle_element_draw(ctx, self, (SimplyElementCircle *)element);
+        break;
+      case SimplyElementTypeRadial:
+        radial_element_draw(ctx, self, (SimplyElementRadial *)element);
         break;
       case SimplyElementTypeText:
-        text_element_draw(ctx, self, (SimplyElementText*) element);
+        text_element_draw(ctx, self, (SimplyElementText *)element);
         break;
       case SimplyElementTypeImage:
-        image_element_draw(ctx, self, (SimplyElementImage*) element);
+        image_element_draw(ctx, self, (SimplyElementImage *)element);
         break;
       case SimplyElementTypeInverter:
         break;
@@ -276,24 +339,41 @@ static void layer_update_callback(Layer *layer, GContext *ctx) {
   if (self->window.is_scrollable) {
     frame.origin = GPointZero;
     layer_set_frame(layer, frame);
-    scroll_layer_set_content_size(self->window.scroll_layer, frame.size);
+    const GSize content_size = scroll_layer_get_content_size(self->window.scroll_layer);
+    if (!gsize_equal(&frame.size, &content_size)) {
+      scroll_layer_set_content_size(self->window.scroll_layer, frame.size);
+    }
   }
 }
 
-static SimplyElementCommon *alloc_element(SimplyElementType type) {
+static size_t prv_get_element_size(SimplyElementType type) {
   switch (type) {
-    case SimplyElementTypeNone: return NULL;
-    case SimplyElementTypeRect: return malloc0(sizeof(SimplyElementRect));
-    case SimplyElementTypeCircle: return malloc0(sizeof(SimplyElementCircle));
-    case SimplyElementTypeText: return malloc0(sizeof(SimplyElementText));
-    case SimplyElementTypeImage: return malloc0(sizeof(SimplyElementImage));
+    case SimplyElementTypeNone: return 0;
+    case SimplyElementTypeLine: return sizeof(SimplyElementLine);
+    case SimplyElementTypeRect: return sizeof(SimplyElementRect);
+    case SimplyElementTypeCircle: return sizeof(SimplyElementCircle);
+    case SimplyElementTypeRadial: return sizeof(SimplyElementRadial);
+    case SimplyElementTypeText: return sizeof(SimplyElementText);
+    case SimplyElementTypeImage: return sizeof(SimplyElementImage);
+    case SimplyElementTypeInverter: return sizeof(SimplyElementInverter);
+  }
+  return 0;
+}
+
+static SimplyElementCommon *prv_create_element(SimplyElementType type) {
+  SimplyElementCommon *common = malloc0(prv_get_element_size(type));
+  if (!common) {
+    return NULL;
+  }
+  switch (type) {
+    default: return common;
     case SimplyElementTypeInverter: {
-      SimplyElementInverter *element = malloc0(sizeof(SimplyElementInverter));
+      SimplyElementInverter *element = (SimplyElementInverter *)common;
       element->inverter_layer = inverter_layer_create(GRect(0, 0, 0, 0));
-      return &element->common;
+      return common;
     }
   }
-  return NULL;
+  return common;
 }
 
 SimplyElementCommon *simply_stage_auto_element(SimplyStage *self, uint32_t id, SimplyElementType type) {
@@ -305,9 +385,10 @@ SimplyElementCommon *simply_stage_auto_element(SimplyStage *self, uint32_t id, S
   if (element) {
     return element;
   }
-  element = alloc_element(type);
-  if (!element) {
-    return NULL;
+  while (!(element = prv_create_element(type))) {
+    if (!simply_res_evict_image(self->window.simply->res)) {
+      return NULL;
+    }
   }
   element->id = id;
   element->type = type;
@@ -337,6 +418,9 @@ SimplyElementCommon *simply_stage_remove_element(SimplyStage *self, SimplyElemen
 }
 
 void simply_stage_set_element_frame(SimplyStage *self, SimplyElementCommon *element, GRect frame) {
+  if (element->type != SimplyElementTypeLine) {
+    grect_standardize(&frame);
+  }
   element->frame = frame;
   switch (element->type) {
     default: break;
@@ -388,7 +472,7 @@ SimplyAnimation *simply_stage_animate_element(SimplyStage *self,
   static const PropertyAnimationImplementation implementation = {
     .base = {
       .update = (AnimationUpdateImplementation) property_animation_update_grect,
-      .teardown = (AnimationTeardownImplementation) free,
+      .teardown = (AnimationTeardownImplementation) animation_destroy,
     },
     .accessors = {
       .setter = { .grect = (const GRectSetter) element_frame_setter },
@@ -421,35 +505,34 @@ SimplyAnimation *simply_stage_animate_element(SimplyStage *self,
 }
 
 static void window_load(Window *window) {
-  SimplyStage *self = window_get_user_data(window);
+  SimplyStage * const self = window_get_user_data(window);
 
   simply_window_load(&self->window);
 
-  Layer *window_layer = window_get_root_layer(window);
-  GRect frame = layer_get_frame(window_layer);
-  frame.origin = GPointZero;
+  Layer * const window_layer = window_get_root_layer(window);
+  const GRect frame = { .size = layer_get_frame(window_layer).size };
 
-  Layer *layer = layer_create_with_data(frame, sizeof(void*));
-  self->window.layer = self->stage_layer.layer = layer;
+  Layer * const layer = layer_create_with_data(frame, sizeof(void *));
+  self->stage_layer.layer = layer;
   *(void**) layer_get_data(layer) = self;
   layer_set_update_proc(layer, layer_update_callback);
   scroll_layer_add_child(self->window.scroll_layer, layer);
-  scroll_layer_set_click_config_onto_window(self->window.scroll_layer, window);
+  self->window.use_scroll_layer = true;
 }
 
 static void window_appear(Window *window) {
   SimplyStage *self = window_get_user_data(window);
-  simply_window_stack_send_show(self->window.simply->window_stack, &self->window);
+  simply_window_appear(&self->window);
 
   simply_stage_update_ticker(self);
 }
 
 static void window_disappear(Window *window) {
   SimplyStage *self = window_get_user_data(window);
-  simply_window_stack_send_hide(self->window.simply->window_stack, &self->window);
-
-  simply_res_clear(self->window.simply->res);
-  simply_stage_clear(self);
+  if (simply_window_disappear(&self->window)) {
+    simply_res_clear(self->window.simply->res);
+    simply_stage_clear(self);
+  }
 }
 
 static void window_unload(Window *window) {
@@ -522,6 +605,7 @@ static void handle_element_common_packet(Simply *simply, Packet *data) {
   simply_stage_set_element_frame(simply->stage, element, packet->frame);
   element->background_color = packet->background_color;
   element->border_color = packet->border_color;
+  element->border_width = packet->border_width;
   simply_stage_update(simply->stage);
 }
 
@@ -532,6 +616,28 @@ static void handle_element_radius_packet(Simply *simply, Packet *data) {
     return;
   }
   element->radius = packet->radius;
+  simply_stage_update(simply->stage);
+};
+
+static void handle_element_angle_packet(Simply *simply, Packet *data) {
+  ElementAnglePacket *packet = (ElementAnglePacket *)data;
+  SimplyElementRadial *element =
+      (SimplyElementRadial *)simply_stage_get_element(simply->stage, packet->id);
+  if (!element) {
+    return;
+  }
+  element->angle = packet->angle;
+  simply_stage_update(simply->stage);
+};
+
+static void handle_element_angle2_packet(Simply *simply, Packet *data) {
+  ElementAngle2Packet *packet = (ElementAngle2Packet *)data;
+  SimplyElementRadial *element =
+      (SimplyElementRadial *)simply_stage_get_element(simply->stage, packet->id);
+  if (!element) {
+    return;
+  }
+  element->angle2 = packet->angle;
   simply_stage_update(simply->stage);
 };
 
@@ -583,7 +689,12 @@ static void handle_element_animate_packet(Simply *simply, Packet *data) {
   if (!element) {
     return;
   }
-  SimplyAnimation *animation = malloc0(sizeof(*animation));
+  SimplyAnimation *animation = NULL;
+  while (!(animation = malloc0(sizeof(*animation)))) {
+    if (!simply_res_evict_image(simply->res)) {
+      return;
+    }
+  }
   animation->duration = packet->duration;
   animation->curve = packet->curve;
   simply_stage_animate_element(simply->stage, element, animation, packet->frame);
@@ -606,6 +717,12 @@ bool simply_stage_handle_packet(Simply *simply, Packet *packet) {
     case CommandElementRadius:
       handle_element_radius_packet(simply, packet);
       return true;
+    case CommandElementAngle:
+      handle_element_angle_packet(simply, packet);
+      return true;
+    case CommandElementAngle2:
+      handle_element_angle2_packet(simply, packet);
+      return true;
     case CommandElementText:
       handle_element_text_packet(simply, packet);
       return true;
@@ -626,16 +743,16 @@ SimplyStage *simply_stage_create(Simply *simply) {
   SimplyStage *self = malloc(sizeof(*self));
   *self = (SimplyStage) { .window.simply = simply };
 
-  simply_window_init(&self->window, simply);
-  simply_window_set_background_color(&self->window, GColor8Black);
-
-  window_set_user_data(self->window.window, self);
-  window_set_window_handlers(self->window.window, (WindowHandlers) {
+  static const WindowHandlers s_window_handlers = {
     .load = window_load,
     .appear = window_appear,
     .disappear = window_disappear,
     .unload = window_unload,
-  });
+  };
+  self->window.window_handlers = &s_window_handlers;
+
+  simply_window_init(&self->window, simply);
+  simply_window_set_background_color(&self->window, GColor8Black);
 
   return self;
 }

@@ -10,8 +10,10 @@ var Vector2 = require('vector2');
 var main = new UI.Card({
   title: 'Pebble.js',
   icon: 'images/menu_icon.png',
-  subtitle: 'Hello Tennis!',
-  body: 'Press any button.'
+  subtitle: 'Hello World!',
+  body: 'Press any button.',
+  subtitleColor: 'indigo', // Named colors
+  bodyColor: '#9a0036' // Hex colors
 });
 
 main.show();
@@ -26,6 +28,10 @@ main.on('click', 'up', function(e) {
       }, {
         title: 'Second Item',
         subtitle: 'Subtitle Text'
+      }, {
+        title: 'Third Item',
+      }, {
+        title: 'Fourth Item',
       }]
     }]
   });
@@ -37,14 +43,38 @@ main.on('click', 'up', function(e) {
 });
 
 main.on('click', 'select', function(e) {
-  var wind = new UI.Window();
+  var wind = new UI.Window({
+    backgroundColor: 'black'
+  });
+  var radial = new UI.Radial({
+    size: new Vector2(140, 140),
+    angle: 0,
+    angle2: 300,
+    radius: 20,
+    backgroundColor: 'cyan',
+    borderColor: 'celeste',
+    borderWidth: 1,
+  });
   var textfield = new UI.Text({
-    position: new Vector2(0, 50),
-    size: new Vector2(144, 30),
+    size: new Vector2(140, 60),
     font: 'gothic-24-bold',
-    text: 'Text Anywhere!',
+    text: 'Dynamic\nWindow',
     textAlign: 'center'
   });
+  var windSize = wind.size();
+  // Center the radial in the window
+  var radialPos = radial.position()
+      .addSelf(windSize)
+      .subSelf(radial.size())
+      .multiplyScalar(0.5);
+  radial.position(radialPos);
+  // Center the textfield in the window
+  var textfieldPos = textfield.position()
+      .addSelf(windSize)
+      .subSelf(textfield.size())
+      .multiplyScalar(0.5);
+  textfield.position(textfieldPos);
+  wind.add(radial);
   wind.add(textfield);
   wind.show();
 });

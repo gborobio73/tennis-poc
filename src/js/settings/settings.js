@@ -1,6 +1,7 @@
-var util2 = require('util2');
-var ajax = require('ajax');
-var myutil = require('myutil');
+var util2 = require('lib/util2');
+var myutil = require('lib/myutil');
+var safe = require('lib/safe');
+var ajax = require('lib/ajax');
 var appinfo = require('appinfo');
 
 var Settings = module.exports;
@@ -9,7 +10,7 @@ var parseJson = function(data) {
   try {
     return JSON.parse(data);
   } catch (e) {
-    return data;
+    safe.warn('Invalid JSON in localStorage: ' + (e.message || '') + '\n\t' + data);
   }
 };
 
@@ -80,7 +81,12 @@ Settings._loadData = function(path, field, nocache) {
   field = field || 'data';
   state[field] = {};
   var key = Settings._getDataKey(path, field);
-  var data = parseJson(localStorage.getItem(key));
+  var value = localStorage.getItem(key);
+  var data = parseJson(value);
+  if (value && typeof data === 'undefined') {
+    // There was an issue loading the data, remove it
+    localStorage.removeItem(key);
+  }
   if (!nocache && typeof data === 'object' && data !== null) {
     state[field] = data;
   }
@@ -106,12 +112,10 @@ var makeDataAccessor = function(type, path) {
     }
     if (typeof field !== 'object' && value === undefined || value === null) {
       delete data[field];
-      return;
     }
     var def = myutil.toObject(field, value);
     util2.copy(def, data);
     Settings._saveData(path, type);
-    return value;
   };
 };
 
@@ -160,8 +164,10 @@ Settings.onOpenConfig = function(e) {
     options = Settings.getBaseOptions();
     return;
   }
-  var hash = encodeURIComponent(JSON.stringify(options));
-  Pebble.openURL(url + '#' + hash);
+  if (listener.params.hash !== false) {
+    url += '#' + encodeURIComponent(JSON.stringify(options));
+  }
+  Pebble.openURL(url);
 };
 
 Settings.onCloseConfig = function(e) {

@@ -1,5 +1,6 @@
 var imagelib = require('lib/image');
 var myutil = require('myutil');
+var Feature = require('platform/feature');
 var Resource = require('ui/resource');
 var simply = require('ui/simply');
 
@@ -88,7 +89,7 @@ ImageService.load = function(opt, reset, callback) {
   image.loaded = true;
   state.cache[hash] = image;
   var onLoad = function() {
-    simply.impl.image(image.id, image.gbitmap);
+    simply.impl.image(image.id, image.image);
     if (callback) {
       var e = {
         type: 'image',
@@ -99,7 +100,8 @@ ImageService.load = function(opt, reset, callback) {
     }
   };
   if (fetch) {
-    imagelib.load(image, onLoad);
+    var bitdepth = Feature.color(8, 1);
+    imagelib.load(image, bitdepth, onLoad);
   } else {
     onLoad();
   }

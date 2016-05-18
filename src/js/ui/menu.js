@@ -1,12 +1,21 @@
 var util2 = require('util2');
 var myutil = require('myutil');
 var Emitter = require('emitter');
+var Platform = require('platform');
 var WindowStack = require('ui/windowstack');
 var Window = require('ui/window');
 var simply = require('ui/simply');
 
+var defaults = {
+  status: true,
+  backgroundColor: 'white',
+  textColor: 'black',
+  highlightBackgroundColor: 'black',
+  highlightTextColor: 'white',
+};
+
 var Menu = function(menuDef) {
-  Window.call(this, menuDef);
+  Window.call(this, myutil.shadow(defaults, menuDef || {}));
   this._dynamic = false;
   this._sections = {};
   this._selection = { sectionIndex: 0, itemIndex: 0 };
@@ -20,17 +29,22 @@ util2.inherit(Menu, Window);
 util2.copy(Emitter.prototype, Menu.prototype);
 
 Menu.prototype._show = function() {
-  this._resolveMenu();
   Window.prototype._show.apply(this, arguments);
-  var select = this._selection;
-  simply.impl.menuSelection(select.sectionIndex, select.itemIndex);
+  this._select();
 };
 
-Menu.prototype._numPreloadItems = 5;
+Menu.prototype._select = function() {
+  if (this === WindowStack.top()) {
+    var select = this._selection;
+    simply.impl.menuSelection(select.sectionIndex, select.itemIndex);
+  }
+};
+
+Menu.prototype._numPreloadItems = (Platform.version() === 'aplite' ? 5 : 50);
 
 Menu.prototype._prop = function(state, clear, pushing) {
   if (this === WindowStack.top()) {
-    simply.impl.menu.call(this, state, clear, pushing);
+    this._resolveMenu(clear, pushing);
     this._resolveSection(this._selection);
   }
 };
@@ -132,10 +146,10 @@ Menu.prototype._getItem = function(e, create) {
   return (items[e.itemIndex] = {});
 };
 
-Menu.prototype._resolveMenu = function() {
+Menu.prototype._resolveMenu = function(clear, pushing) {
   var sections = this._getSections(this);
   if (this === WindowStack.top()) {
-    simply.impl.menu.call(this, this.state);
+    simply.impl.menu(this.state, clear, pushing);
     return true;
   }
 };
@@ -143,6 +157,10 @@ Menu.prototype._resolveMenu = function() {
 Menu.prototype._resolveSection = function(e, clear) {
   var section = this._getSection(e);
   if (!section) { return; }
+  section = myutil.shadow({
+    textColor: this.state.textColor, 
+    backgroundColor: this.state.backgroundColor
+  }, section);
   section.items = this._getItems(e);
   if (this === WindowStack.top()) {
     simply.impl.menuSection.call(this, e.sectionIndex, section, clear);
@@ -292,9 +310,22 @@ Menu.prototype.item = function(sectionIndex, itemIndex, item) {
   return this;
 };
 
-Menu.prototype.selection = function(callback) {
-  this._selections.push(callback);
-  simply.impl.menuSelection();
+Menu.prototype.selection = function(sectionIndex, itemIndex) {
+  var callback;
+  if (typeof sectionIndex === 'function') {
+    callback = sectionIndex;
+    sectionIndex = undefined;
+  }
+  if (callback) {
+    this._selections.push(callback);
+    simply.impl.menuSelection();
+  } else {
+    this._selection = {
+      sectionIndex: sectionIndex,
+      itemIndex: itemIndex,
+    };
+    this._select();
+  }
 };
 
 Menu.emit = Window.emit;

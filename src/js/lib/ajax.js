@@ -87,14 +87,18 @@ var ajax = function(opt, success, failure) {
     if (opt.type === 'json') {
       req.setRequestHeader('Content-Type', 'application/json');
       data = JSON.stringify(opt.data);
+    } else if (opt.type === 'xml') {
+      req.setRequestHeader('Content-Type', 'text/xml');
     } else if (opt.type !== 'text') {
       req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
       data = formify(opt.data);
     }
   }
 
+  var ready = false;
   req.onreadystatechange = function(e) {
-    if (req.readyState === 4) {
+    if (req.readyState === 4 && !ready) {
+      ready = true;
       var body = req.responseText;
       var okay = req.status >= 200 && req.status < 300 || req.status === 304;
 

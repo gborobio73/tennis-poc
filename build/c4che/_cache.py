@@ -1,0 +1,11 @@
+APPINFO_JSON = {u'sdkVersion': u'3', u'uuid': u'133215f0-cf20-4c05-997b-3c9be5a64e5b', u'appKeys': {}, u'companyName': u'Meiguro', u'targetPlatforms': [u'aplite', u'basalt', u'chalk'], u'capabilities': [u'configurable'], u'versionLabel': u'0.4', u'longName': u'Pebble.js', u'versionCode': 1, u'shortName': u'Pebble.js', u'watchapp': {u'watchface': False}, u'resources': {u'media': [{u'menuIcon': True, u'type': u'bitmap', u'name': u'IMAGE_MENU_ICON', u'file': u'images/menu_icon.png'}, {u'type': u'bitmap', u'name': u'IMAGE_LOGO_SPLASH', u'file': u'images/logo_splash.png'}, {u'type': u'bitmap', u'name': u'IMAGE_TILE_SPLASH', u'file': u'images/tile_splash.png'}, {u'type': u'font', u'name': u'MONO_FONT_14', u'file': u'fonts/UbuntuMono-Regular.ttf'}]}}
+BINDIR = '/usr/local/bin'
+DEFINES = ['RELEASE']
+LIBDIR = '/usr/local/lib'
+PBW_NAME = 'tennis-poc.pbw'
+PEBBLE_SDK_COMMON = '/Users/Gon/Library/Application Support/Pebble SDK/SDKs/current/sdk-core/pebble/common'
+PEBBLE_SDK_ROOT = '/Users/Gon/Library/Application Support/Pebble SDK/SDKs/current/sdk-core/pebble'
+PREFIX = '/usr/local'
+RESOURCES_JSON = [{u'menuIcon': True, u'type': u'bitmap', u'name': u'IMAGE_MENU_ICON', u'file': u'images/menu_icon.png'}, {u'type': u'bitmap', u'name': u'IMAGE_LOGO_SPLASH', u'file': u'images/logo_splash.png'}, {u'type': u'bitmap', u'name': u'IMAGE_TILE_SPLASH', u'file': u'images/tile_splash.png'}, {u'type': u'font', u'name': u'MONO_FONT_14', u'file': u'fonts/UbuntuMono-Regular.ttf'}]
+TARGET_PLATFORMS = ['chalk', 'basalt', 'aplite']
+TIMESTAMP = 1463588533
