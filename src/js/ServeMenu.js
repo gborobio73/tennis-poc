@@ -19,7 +19,7 @@ var ServeMenu = function(){
   menu.on('select', function(e) {
     console.log('Selected item #' + e.itemIndex + ' of section #' + e.sectionIndex);
     //console.log('The item is titled "' + e.item.title + '"');
-    new StartMatchMenu().show();
+    new StartMatchMenu(e.itemIndex).show();
   });
   this.show = function(){
     menu.show();

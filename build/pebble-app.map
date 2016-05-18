@@ -2262,3 +2262,24 @@ OUTPUT(/Users/Gon/Projects/pebble/tennis-poc/build/aplite/pebble-app.elf elf32-l
  .debug_frame   0x0000000000001190       0x38 /Users/Gon/Projects/pebble/pebble-dev/pebble-sdk-4.2-mac/arm-cs-tools/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/libgcc.a(_divdi3.o)
  .debug_frame   0x00000000000011c8       0x38 /Users/Gon/Projects/pebble/pebble-dev/pebble-sdk-4.2-mac/arm-cs-tools/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/libgcc.a(_udivdi3.o)
  .debug_frame   0x0000000000001200       0x20 /Users/Gon/Projects/pebble/pebble-dev/pebble-sdk-4.2-mac/arm-cs-tools/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/libgcc.a(_udivsi3.o)
+abi/4.7.2/thumb2/libgcc.a(_udivdi3.o)
+
+.debug_frame    0x0000000000000000     0x12cc
+ .debug_frame   0x0000000000000000       0x28 src/main.c.21.o
+ .debug_frame   0x0000000000000028       0x40 src/simply/simply.c.21.o
+ .debug_frame   0x0000000000000068       0xd0 src/simply/simply_accel.c.21.o
+ .debug_frame   0x0000000000000138      0x394 src/simply/simply_menu.c.21.o
+ .debug_frame   0x00000000000004cc      0x178 src/simply/simply_msg.c.21.o
+ .debug_frame   0x0000000000000644      0x1e8 src/simply/simply_res.c.21.o
+ .debug_frame   0x000000000000082c       0x9c src/simply/simply_splash.c.21.o
+ .debug_frame   0x00000000000008c8      0x2a8 src/simply/simply_stage.c.21.o
+ .debug_frame   0x0000000000000b70      0x1b4 src/simply/simply_ui.c.21.o
+ .debug_frame   0x0000000000000d24       0xb0 src/simply/simply_voice.c.21.o
+ .debug_frame   0x0000000000000dd4       0x7c src/simply/simply_wakeup.c.21.o
+ .debug_frame   0x0000000000000e50      0x284 src/simply/simply_window.c.21.o
+ .debug_frame   0x00000000000010d4      0x114 src/simply/simply_window_stack.c.21.o
+ .debug_frame   0x00000000000011e8       0x54 /Users/Gon/Projects/pebble/pebble-dev/pebble-sdk-4.2-mac/arm-cs-tools/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/libgcc.a(bpabi.o)
+ .debug_frame   0x000000000000123c       0x38 /Users/Gon/Projects/pebble/pebble-dev/pebble-sdk-4.2-mac/arm-cs-tools/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/libgcc.a(_divdi3.o)
+ .debug_frame   0x0000000000001274       0x38 /Users/Gon/Projects/pebble/pebble-dev/pebble-sdk-4.2-mac/arm-cs-tools/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/libgcc.a(_udivdi3.o)
+ .debug_frame   0x00000000000012ac       0x20 /Users/Gon/Projects/pebble/pebble-dev/pebble-sdk-4.2-mac/arm-cs-tools/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/libgcc.a(_udivsi3.o)
+v/pebble-sdk-4.2-mac/arm-cs-tools/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/libgcc.a(_udivsi3.o)

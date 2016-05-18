@@ -1,10 +1,10 @@
 {
   "appKeys": {},
   "capabilities": [
-    "configurable"
+    ""
   ],
-  "companyName": "Meiguro",
-  "longName": "Pebble.js",
+  "companyName": "Leeloo Inc.",
+  "longName": "Tennis",
   "resources": {
     "media": [
       {
@@ -31,7 +31,7 @@
     ]
   },
   "sdkVersion": "3",
-  "shortName": "Pebble.js",
+  "shortName": "Tennis",
   "targetPlatforms": [
     "aplite",
     "basalt",

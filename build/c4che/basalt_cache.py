@@ -1,4 +1,4 @@
-APPINFO_JSON = {u'sdkVersion': u'3', u'uuid': u'133215f0-cf20-4c05-997b-3c9be5a64e5b', u'appKeys': {}, u'companyName': u'Meiguro', u'targetPlatforms': [u'aplite', u'basalt', u'chalk'], u'capabilities': [u'configurable'], u'versionLabel': u'0.4', u'longName': u'Pebble.js', u'versionCode': 1, u'shortName': u'Pebble.js', u'watchapp': {u'watchface': False}, u'resources': {u'media': [{u'menuIcon': True, u'type': u'bitmap', u'name': u'IMAGE_MENU_ICON', u'file': u'images/menu_icon.png'}, {u'type': u'bitmap', u'name': u'IMAGE_LOGO_SPLASH', u'file': u'images/logo_splash.png'}, {u'type': u'bitmap', u'name': u'IMAGE_TILE_SPLASH', u'file': u'images/tile_splash.png'}, {u'type': u'font', u'name': u'MONO_FONT_14', u'file': u'fonts/UbuntuMono-Regular.ttf'}]}}
+APPINFO_JSON = {u'sdkVersion': u'3', u'uuid': u'133215f0-cf20-4c05-997b-3c9be5a64e5b', u'appKeys': {}, u'companyName': u'Leeloo Inc.', u'targetPlatforms': [u'aplite', u'basalt', u'chalk'], u'capabilities': [u''], u'versionLabel': u'0.4', u'longName': u'Tennis', u'versionCode': 1, u'shortName': u'Tennis', u'watchapp': {u'watchface': False}, u'resources': {u'media': [{u'menuIcon': True, u'type': u'bitmap', u'name': u'IMAGE_MENU_ICON', u'file': u'images/menu_icon.png'}, {u'type': u'bitmap', u'name': u'IMAGE_LOGO_SPLASH', u'file': u'images/logo_splash.png'}, {u'type': u'bitmap', u'name': u'IMAGE_TILE_SPLASH', u'file': u'images/tile_splash.png'}, {u'type': u'font', u'name': u'MONO_FONT_14', u'file': u'fonts/UbuntuMono-Regular.ttf'}]}}
 AR = 'arm-none-eabi-gcc-ar'
 ARFLAGS = 'rcs'
 AS = 'arm-none-eabi-gcc'
@@ -49,7 +49,7 @@ STLIBPATH_ST = '-L%s'
 STLIB_MARKER = None
 STLIB_ST = '-l%s'
 TARGET_PLATFORMS = ['chalk', 'basalt', 'aplite']
-TIMESTAMP = 1463588533
+TIMESTAMP = 1463595083
 cprogram_PATTERN = '%s'
 cshlib_PATTERN = 'lib%s.so'
 cstlib_PATTERN = 'lib%s.a'

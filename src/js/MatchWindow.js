@@ -96,6 +96,11 @@ var MatchWindow = function(matchScore){
       renderScore();      
     });
     
+    wind.on('click','select', function() {            
+      self.matchScore.cancelLastPoint();      
+      renderScore();      
+    });
+
     function renderScore(){
       self.oppPoints.text(self.matchScore.points[0]);      
       self.oppGames.text(self.matchScore.games[0]);      

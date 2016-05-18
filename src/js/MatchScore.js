@@ -4,100 +4,43 @@ var MatchScore = function(whoServes){
   this.whoServes = whoServes;
   this.isTieBreak = false;
   this.matchIsOver=false;
+  
+  var scores =[];
+
   var opp =0;
   var you =1;
+  
   this.sets = [0,0];
   this.games = [0,0];
   this.points= [0,0];
 
   this.opponentPoint = function(){
     point(opp, you);
+    storeScore();
   };
   
   this.yourPoint = function(){
     point(you, opp);
+    storeScore();
   };
-  
-  /*
-  this.opponentPoint = function(){
-    
-    if(this.isTieBreak){
-      if(this.points[opp] <= 5){
-        this.points[opp]++;
-      }else{
-        if(this.points[opp] + 1 - this.points[you] >=2){
-          newGame(opp, you);
-        }else{
-          this.points[opp]++;
-        }
-      }
-    }else{
-      if(this.points[opp] === 'Ad'){
-        //end of the game - opp won
-        console.log('end of the game - opp won');
-        newGame(opp, you);
-      }else if(this.points[opp] === 40){
-        if(this.points[you] === 40){
-          console.log('Ad opponent');
-          this.points[opp] ='Ad';
-        }else if(this.points[you] === 'Ad'){
-          console.log('40 all');
-          this.points[opp] = 40;
-          this.points[you] = 40;        
-        }else{
-          //end of the game - opp won        
-          console.log('end of the game - opp won');        
-          newGame(opp, you);
-        }      
-      }else if(this.points[opp] === 30){
-        this.points[opp] =40;
-      }else if(this.points[opp] === 15){
-        this.points[opp] =30;
-      }else if(this.points[opp] === 0){
-        this.points[opp] =15;
-      }
-    }    
+
+  this.cancelLastPoint = function(){
+    if (scores.length > 1) {
+      scores.pop(); //remove last
+      this.sets[opp] = scores[scores.length - 1].sets[opp];
+      this.sets[you] = scores[scores.length - 1].sets[you];
+      
+      this.games[opp] = scores[scores.length - 1].games[opp];
+      this.games[you] = scores[scores.length - 1].games[you];
+
+      this.points[opp] = scores[scores.length - 1].points[opp];
+      this.points[you] = scores[scores.length - 1].points[you];
+    }
   };
-  
-  this.yourPoint = function(){
-    if(this.isTieBreak){
-      if(this.points[you] <= 5){
-        this.points[you]++;
-      }else{
-        if(this.points[you] + 1 - this.points[opp] >=2){
-          newGame(you, opp);
-        }else{
-          this.points[you]++;
-        }
-      }
-    }else{
-      if(this.points[you] === 'Ad'){
-        //end of the game -> you won
-        newGame(you, opp);
-      }else if(this.points[you] === 40){
-       if(this.points[opp] === 40){
-         console.log('Ad you');
-          this.points[you] ='Ad';
-        }else if(this.points[opp] === 'Ad'){
-          console.log('40 all');
-          this.points[you] = 40;
-          this.points[opp] = 40;        
-        }else{
-          //end of the game -> you won
-          newGame(you, opp);
-        }      
-      }else if(this.points[you] === 30){
-        this.points[you] =40;
-      }else if(this.points[you] === 15){
-        this.points[you] =30;
-      }else if(this.points[you] === 0){
-        this.points[you] =15;
-      }
-    }    
-  };*/
   
   var self = this;
-  
+  storeScore();
+
   function point(whoWon, whoLost){
     if(self.isTieBreak){
       if(self.points[whoWon] <= 5){
@@ -173,6 +116,15 @@ var MatchScore = function(whoServes){
     if(self.sets[whoWon] ===3){
       self.matchIsOver=true;
     }
+  }
+
+  function storeScore(){
+    scores.push({
+      "sets":[self.sets[opp], self.sets[you]], 
+      "games": [self.games[opp], self.games[you]], 
+      "points": [self.points[opp], self.points[you]]
+    });
+    console.log('scores:' + JSON.stringify(scores));
   }
 };
 
