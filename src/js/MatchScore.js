@@ -26,19 +26,18 @@ var MatchScore = function(whoServes){
 
   this.cancelLastPoint = function(){
     if (scores.length > 1) {
-      scores.pop(); //remove last
+      scores.pop(); //remove last score     
       this.sets[opp] = scores[scores.length - 1].sets[opp];
-      this.sets[you] = scores[scores.length - 1].sets[you];
-      
+      this.sets[you] = scores[scores.length - 1].sets[you];      
       this.games[opp] = scores[scores.length - 1].games[opp];
       this.games[you] = scores[scores.length - 1].games[you];
-
       this.points[opp] = scores[scores.length - 1].points[opp];
       this.points[you] = scores[scores.length - 1].points[you];
     }
   };
   
   var self = this;
+
   storeScore();
 
   function point(whoWon, whoLost){
@@ -55,7 +54,7 @@ var MatchScore = function(whoServes){
     }else{
       if(self.points[whoWon] === 'Ad'){
         //end of the game - opp won
-        console.log('end of the game - opp won');
+        console.log('end of the game - whoWon had Ad');
         newGame(whoWon, whoLost);
       }else if(self.points[whoWon] === 40){
         if(self.points[whoLost] === 40){
@@ -66,8 +65,8 @@ var MatchScore = function(whoServes){
           self.points[whoWon] = 40;
           self.points[whoLost] = 40;        
         }else{
-          //end of the game - opp won        
-          console.log('end of the game - opp won');        
+          //end of the game        
+          console.log('end of the game - who lost had 30 or less');        
           newGame(whoWon, whoLost);
         }      
       }else if(self.points[whoWon] === 30){
@@ -98,7 +97,7 @@ var MatchScore = function(whoServes){
         console.log('is tiebreak');
       }else if(self.games[whoLost]  <=4){
         //its over
-        console.log('game over. start new set');
+        console.log('game over. who lost had 4 or less games. start new set');
         newSet(whoWon, whoLost);
       }else{
         self.games[whoWon] ++;
