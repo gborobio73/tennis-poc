@@ -127,4 +127,8 @@ var MatchScore = function(whoServes){
   }
 };
 
-module.exports = MatchScore;
+
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined')
+    module.exports = MatchScore;
+  else
+    window.MatchScore = MatchScore;

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jasmine Spec Runner v2.4.1</title>
+
+  <link rel="shortcut icon" type="image/png" href="lib/jasmine-2.4.1/jasmine_favicon.png">
+  <link rel="stylesheet" href="lib/jasmine-2.4.1/jasmine.css">
+
+  <script src="lib/jasmine-2.4.1/jasmine.js"></script>
+  <script src="lib/jasmine-2.4.1/jasmine-html.js"></script>
+  <script src="lib/jasmine-2.4.1/boot.js"></script>
+  <script src="jquery-2.2.3.min.js"></script>
+  <!--script src="require.js"></script>  
+  <script>
+    require.config({
+      baseUrl: "../../../src/js",
+      map: {
+        '*': {
+            'ui': 'ui/index'
+        }},
+      waitSeconds: 15
+    });
+    //require( ["some/module", "my/module", "a.js", "b.js"],
+      require( ["MainMenu"],
+      function(ServeMenu) {
+          //This function will be called when all the dependencies
+          //listed above are loaded. Note that this function could
+          //be called before the page is loaded.
+          //This callback is optional.
+      }
+    );
+  </script-->
+
+  <!-- include source files here... -->
+  <script src="../../../src/js/MatchScore.js"></script>    
+  <!-- script src="../../../src/js/MainMenu.js"></script-->  
+
+  <!-- include spec files here... -->
+  <script src="../MatchScoreTests.js"></script>
+
+</head>
+
+<body>
+</body>
+</html>
